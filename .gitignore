@@ -1,0 +1,8 @@
+.bench-tools/
+benchmark/.gradle/
+benchmark/build/
+benchmark/node_modules/
+benchmark/results/*.log
+benchmark/results/.*.log
+benchmark/results/.*.json
+benchmark/results/.*.txt
