@@ -1,0 +1,8 @@
+{
+  "installation": {
+    "version": "23.2.0"
+  },
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "neverConnectToCloud": true,
+  "analytics": false
+}
