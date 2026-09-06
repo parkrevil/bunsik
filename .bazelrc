@@ -1,0 +1,10 @@
+# https://bazel.build/run/bazelrc
+
+# build:linux / build:macos / build:windows 블록을 호스트에 맞춰 자동 적용
+common --enable_platform_specific_config
+
+# 실패한 테스트의 로그를 콘솔에 출력
+test --test_output=errors
+
+# 개발자별 로컬 설정 (커밋하지 않음)
+try-import %workspace%/local.bazelrc

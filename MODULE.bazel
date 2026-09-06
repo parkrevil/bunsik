@@ -1,0 +1,6 @@
+"""bunsik — 물류 플랫폼 모노레포."""
+
+module(
+    name = "bunsik",
+    version = "0.0.0",
+)
