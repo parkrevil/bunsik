@@ -1,16 +1,37 @@
-.bench-tools/
-benchmark/.gradle/
-benchmark/build/
-benchmark/node_modules/
-benchmark/results/*.log
-benchmark/results/.*.log
-benchmark/results/.*.json
-benchmark/results/.*.txt
+# ── 의존성 ──────────────────────────────────────────────
+node_modules/
 
-.claude/worktrees
-.claude/settings.local.json
+# ── 빌드 산출물 ─────────────────────────────────────────
+dist/
+.next/
+/apps/*/out/
+*.tsbuildinfo
 
-# Bazel — 워크스페이스 루트에 생성되는 편의 심볼릭 링크
+# Next.js가 매 실행마다 재생성
+next-env.d.ts
+
+# ── 테스트 ──────────────────────────────────────────────
+coverage/
+*.lcov
+
+# ── 환경 변수 (커밋 금지) ───────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Bazel ───────────────────────────────────────────────
+# 워크스페이스 루트의 편의 심볼릭 링크
 /bazel-*
-# 개발자별 로컬 bazelrc
+# 개발자별 로컬 설정
 /local.bazelrc
+
+# ── 로컬 도구 설정 ──────────────────────────────────────
+.claude/worktrees/
+.claude/settings.local.json
+.vscode/
+.idea/
+
+# ── OS / 로그 ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
