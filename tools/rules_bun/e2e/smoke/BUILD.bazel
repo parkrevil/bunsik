@@ -1,9 +1,12 @@
 """소비자 관점 검증.
 
-룰셋이 외부 모듈로 사용될 때 툴체인 해석·다운로드·실행이 되는지,
+룰셋이 외부 모듈로 사용될 때 툴체인이 해석·다운로드·실행되는지,
 그리고 하드닝이 유지되는지 확인한다.
 """
 
-load("@rules_bun//bun/private/test:smoke.bzl", "bun_version")
+load("@rules_bun//bun/tests:hardening_test.bzl", "hardening_test")
+load(":verify.bzl", "verify_toolchain")
 
-bun_version(name = "bun_version")
+verify_toolchain(name = "verify")
+
+hardening_test(name = "hardening_test")

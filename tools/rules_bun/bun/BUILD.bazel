@@ -1,8 +1,31 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "defs.bzl",
-    "extensions.bzl",
-    "repositories.bzl",
-    "toolchain.bzl",
-])
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    deps = ["//bun/private:providers"],
+)
+
+bzl_library(
+    name = "toolchain",
+    srcs = ["toolchain.bzl"],
+    deps = ["//bun/private:providers"],
+)
+
+bzl_library(
+    name = "extensions",
+    srcs = ["extensions.bzl"],
+    deps = [":repositories"],
+)
+
+bzl_library(
+    name = "repositories",
+    srcs = ["repositories.bzl"],
+    deps = [
+        "//bun/private:platforms",
+        "//bun/private:toolchains_repo",
+        "//bun/private:versions",
+    ],
+)

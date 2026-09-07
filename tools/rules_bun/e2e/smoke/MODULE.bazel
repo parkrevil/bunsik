@@ -8,6 +8,7 @@
 
 module(name = "rules_bun_e2e_smoke")
 
+bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_bun", version = "0.0.0")
 local_path_override(
     module_name = "rules_bun",

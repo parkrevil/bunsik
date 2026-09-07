@@ -30,7 +30,7 @@ def bun_action(
     bunfig = empty_bunfig(ctx)
 
     args = ctx.actions.args()
-    args.add_all(hardening_args(ctx, bunfig))
+    args.add_all(hardening_args(bunfig))
     args.add_all(arguments)
 
     direct = [bunfig]

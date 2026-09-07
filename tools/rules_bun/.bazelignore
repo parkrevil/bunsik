@@ -1,0 +1,10 @@
+# e2e 는 자기 MODULE.bazel 을 가진 별도 워크스페이스다. 루트 빌드가
+# 내려가면 안 된다.
+e2e
+
+# Bazel 이 워크스페이스 루트에 만드는 편의 심볼릭 링크. 이 룰셋이
+# local_path_override 로 소비될 때 외부 저장소 트리에 그대로 노출된다.
+bazel-bin
+bazel-out
+bazel-rules_bun
+bazel-testlogs

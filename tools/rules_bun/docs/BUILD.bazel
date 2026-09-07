@@ -1,0 +1,23 @@
+"""공개 API 문서를 생성하고, 소스와 어긋나면 테스트로 잡는다.
+
+    bazel test //docs:all      # 커밋된 문서가 최신인지 검사
+    bazel run  //docs:update   # 소스 트리에 반영
+
+stardoc 의존은 이 패키지 안에만 둔다. 소비자에게 새면 안 된다.
+"""
+
+load("@aspect_bazel_lib//lib:docs.bzl", "stardoc_with_diff_test", "update_docs")
+
+package(default_visibility = ["//visibility:private"])
+
+stardoc_with_diff_test(
+    name = "defs",
+    bzl_library_target = "//bun:defs",
+)
+
+stardoc_with_diff_test(
+    name = "toolchain",
+    bzl_library_target = "//bun:toolchain",
+)
+
+update_docs(name = "update")

@@ -1,0 +1,11 @@
+"""룰셋 자체의 테스트.
+
+`//bun` 안에 있으므로 `//bun/private/...` 를 load 할 수 있다.
+다만 툴체인이 필요한 테스트는 여기서 **인스턴스화하지 않는다** — 룰셋의
+MODULE.bazel 은 툴체인 버전을 선언하지 않기 때문이다. 그런 테스트는
+룰만 여기 정의하고 `//e2e/smoke` 가 인스턴스화한다.
+"""
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["hardening_test.bzl"])

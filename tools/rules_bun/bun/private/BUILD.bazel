@@ -1,10 +1,35 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
 package(default_visibility = ["//bun:__subpackages__"])
 
-exports_files([
-    "action.bzl",
-    "hardening.bzl",
-    "platforms.bzl",
-    "runfiles.bzl",
-    "toolchains_repo.bzl",
-    "versions.bzl",
-])
+[
+    bzl_library(
+        name = name,
+        srcs = [name + ".bzl"],
+        visibility = ["//visibility:public"],
+    )
+    for name in [
+        "platforms",
+        "providers",
+        "runfiles",
+        "versions",
+    ]
+]
+
+bzl_library(
+    name = "hardening",
+    srcs = ["hardening.bzl"],
+)
+
+bzl_library(
+    name = "action",
+    srcs = ["action.bzl"],
+    deps = [":hardening"],
+)
+
+bzl_library(
+    name = "toolchains_repo",
+    srcs = ["toolchains_repo.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [":platforms"],
+)

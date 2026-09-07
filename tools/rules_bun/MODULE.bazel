@@ -9,6 +9,10 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
 
+# 문서 생성 전용. 소비자에게 전파되지 않는다.
+bazel_dep(name = "stardoc", version = "0.8.0", dev_dependency = True)
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.5", dev_dependency = True)
+
 # 툴체인 버전은 선언하지 않는다.
 # 여기서 선언하면 소비자(루트 모듈)가 버전을 내릴 수 없다 —
 # 확장이 선언된 버전 중 최댓값을 고르므로 룰셋 쪽 값이 항상 이긴다.

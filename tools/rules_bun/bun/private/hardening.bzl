@@ -50,11 +50,10 @@ def empty_bunfig(ctx):
     ctx.actions.write(f, "")
     return f
 
-def hardening_args(ctx, bunfig, relative_to = None):
+def hardening_args(bunfig, relative_to = None):
     """`ctx.actions.args()` 에 넣을 하드닝 인자 목록.
 
     Args:
-        ctx: 룰 컨텍스트.
         bunfig: `empty_bunfig()` 가 만든 File.
         relative_to: 액션이 cwd 를 옮기는 경우 그 디렉터리. 설정 파일 경로를
             거기서부터의 상대 경로로 만든다. 보통은 None.

@@ -5,6 +5,7 @@
 깨지면 이 테스트가 실패한다.
 """
 
+load("//bun:defs.bzl", "BUN_TOOLCHAIN_TYPE")
 load("//bun/private:hardening.bzl", "empty_bunfig", "hardening_args")
 load("//bun/private:runfiles.bzl", "runfiles_path")
 
@@ -36,13 +37,13 @@ def _impl(ctx):
     # ctx.actions.run 에는 cwd 인자가 없으므로 이 테스트에 한해 run_shell 로
     # 공격 파일이 있는 디렉터리로 이동한 뒤 bun 을 부른다.
     # (일반 룰은 bun_action 을 쓴다 — 여기만 예외다.)
-    toolchain = ctx.toolchains["//bun/toolchain:type"]
+    toolchain = ctx.toolchains[BUN_TOOLCHAIN_TYPE]
     bun = toolchain.buninfo.bun
     empty = empty_bunfig(ctx)
 
     hardening = " ".join([
         "'" + a + "'"
-        for a in hardening_args(ctx, empty, relative_to = bunfig.dirname)
+        for a in hardening_args(empty, relative_to = bunfig.dirname)
     ])
 
     ctx.actions.run_shell(
@@ -73,7 +74,7 @@ if (fail.length) { console.error("하드닝 실패:\\n  " + fail.join("\\n  "));
 console.log("하드닝 정상: preload 차단, .env 차단");
 """)
 
-    bun = ctx.toolchains["//bun/toolchain:type"].buninfo.bun
+    bun = ctx.toolchains[BUN_TOOLCHAIN_TYPE].buninfo.bun
     launcher = ctx.actions.declare_file(ctx.label.name + ".sh")
     ctx.actions.write(
         launcher,
@@ -98,6 +99,6 @@ console.log("하드닝 정상: preload 차단, .env 차단");
 hardening_test = rule(
     implementation = _impl,
     test = True,
-    toolchains = ["//bun/toolchain:type"],
+    toolchains = [BUN_TOOLCHAIN_TYPE],
     doc = "cwd 의 bunfig.toml/.env 가 무시되는지 확인한다.",
 )
