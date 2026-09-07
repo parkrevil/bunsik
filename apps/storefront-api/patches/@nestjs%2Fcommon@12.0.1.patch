@@ -1,0 +1,31 @@
+diff --git a/pipes/validation.pipe.js b/pipes/validation.pipe.js
+index 7013035d671758e5986ca93f67ce6df5758d64df..d195de430d6b100851a38a5b8f70af58e9cd7aed 100644
+--- a/pipes/validation.pipe.js
++++ b/pipes/validation.pipe.js
+@@ -47,11 +47,11 @@ let ValidationPipe = class ValidationPipe {
+     }
+     loadValidator(validatorPackage) {
+         return (validatorPackage ??
+-            loadPackage('class-validator', 'ValidationPipe', () => import('class-validator')));
++            loadPackage('class-validator', 'ValidationPipe', async () => { try { return await import('class-validator'); } catch (e) { throw e; } }));
+     }
+     loadTransformer(transformerPackage) {
+         return (transformerPackage ??
+-            loadPackage('class-transformer', 'ValidationPipe', () => import('class-transformer')));
++            loadPackage('class-transformer', 'ValidationPipe', async () => { try { return await import('class-transformer'); } catch (e) { throw e; } }));
+     }
+     async transform(value, metadata) {
+         if (this.expectedType) {
+diff --git a/serializer/class-serializer.interceptor.js b/serializer/class-serializer.interceptor.js
+index cb68466a4742d9462ebc301216da64f9de786e00..21c162f33a441edf4e554ee7b83d8d531a183778 100644
+--- a/serializer/class-serializer.interceptor.js
++++ b/serializer/class-serializer.interceptor.js
+@@ -21,7 +21,7 @@ let ClassSerializerInterceptor = class ClassSerializerInterceptor {
+         this.defaultOptions = defaultOptions;
+         classTransformer =
+             defaultOptions?.transformerPackage ??
+-                loadPackage('class-transformer', 'ClassSerializerInterceptor', () => import('class-transformer'));
++                loadPackage('class-transformer', 'ClassSerializerInterceptor', async () => { try { return await import('class-transformer'); } catch (e) { throw e; } });
+     }
+     async intercept(context, next) {
+         classTransformer = (await classTransformer);

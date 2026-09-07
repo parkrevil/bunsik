@@ -1,114 +1,50 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# storefront-api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+쇼핑몰 백엔드. Bun 런타임에서 도는 NestJS 애플리케이션이다.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+| | |
+|---|---|
+| 런타임 | Bun 1.4.2 |
+| 프레임워크 | NestJS 12 (`@nestjs/platform-express`) |
+| 언어 | TypeScript 7 (네이티브 Go 컴파일러), ESM |
+| 테스트 | `bun test` |
+| 린트·포맷 | oxlint · oxfmt |
 
-## Description
+Nest CLI 는 쓰지 않는다. TypeScript 7.0 이 programmatic compiler API 를 제공하지
+않아 `nest build`/`start`/`generate` 가 전부 동작하지 않기 때문이다. 빌드는
+`bun build --compile`, 타입 체크는 `tsc --noEmit` 이 담당한다.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## 명령
 
 ```bash
-$ bun install
+bun run dev           # 개발 서버 (소스 직접 실행, 파일 변경 감지)
+bun run build         # 단일 실행 파일 → dist/server
+bun run start         # 빌드된 바이너리 실행
+
+bun run typecheck     # tsc --noEmit
+bun run lint          # oxlint
+bun run format        # oxfmt (쓰기)
+bun run format:check  # oxfmt --check (쓰지 않고 검사만)
+
+bun run test          # 단위 테스트
+bun run test:e2e      # e2e 테스트
+bun run test:all      # 전부
 ```
 
-## Compile and run the project
+## 빌드 산출물
 
-```bash
-# development
-$ bun run start
+`bun run build` 는 `node_modules` 없이 단독 실행되는 바이너리를 만든다.
 
-# watch mode
-$ bun run start:dev
+- `--bytecode` — 파싱을 빌드 시점으로 옮긴다 (기동 101ms → 54ms)
+- `--format=esm` — `src/main.ts` 의 최상위 `await` 때문에 필수다. TLA 를 걷어내면 이 플래그도 불필요해진다
+- `--sourcemap=inline` — 없으면 스택트레이스가 `/$bunfs/root/...` 로만 찍힌다. 기동 영향 없음
+- `--no-compile-autoload-bunfig` / `--no-compile-autoload-dotenv` — 바이너리가 실행 디렉터리의
+  `bunfig.toml`·`.env` 를 읽지 않게 한다. `bunfig.toml` 의 `preload` 는 실행 디렉터리에서만
+  읽히므로 그대로 두면 임의 코드 실행 경로가 된다. **환경변수는 정상 동작한다** — 파일만 무시한다
+- `--minify-identifiers` 는 쓰지 않는다. DI 는 깨지지 않지만 Nest 로그 라벨이
+  `[InstanceLoader]` → `[Vi]` 로 뭉개지고 (`--keep-names` 로도 못 막는다) 이득은 0.4% 뿐이다
 
-# production mode
-$ bun run start:prod
-```
+## 의존성 패치
 
-## Run tests
-
-```bash
-# unit tests
-$ bun run test
-
-# e2e tests
-$ bun run test:e2e
-
-# test coverage
-$ bun run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ bun install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+`patches/` 참조. `bun build --compile` 이 NestJS 의 optional peer dependency 에서
+멈추는 문제를 `bun patch` 로 해결한다.

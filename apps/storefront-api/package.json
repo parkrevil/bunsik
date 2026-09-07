@@ -7,18 +7,18 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "build": "nest build",
-    "deploy": "nest deploy",
-    "start": "nest start --exec bun",
-    "start:dev": "nest start --exec bun --watch",
-    "start:debug": "nest start --exec bun --debug --watch",
-    "start:prod": "bun dist/main",
+    "dev": "bun --bun --watch src/main.ts",
+    "build": "bun build src/main.ts --compile --bytecode --format=esm --minify-whitespace --minify-syntax --sourcemap=inline --no-compile-autoload-bunfig --no-compile-autoload-dotenv --target bun --outfile dist/server",
+    "start": "./dist/server",
+    "typecheck": "tsc --noEmit",
     "lint": "oxlint src/ test/",
     "format": "oxfmt src/ test/",
+    "format:check": "oxfmt --check src/ test/",
     "test": "bun test src",
     "test:watch": "bun test src --watch",
     "test:cov": "bun test src --coverage",
-    "test:e2e": "bun test test"
+    "test:e2e": "bun test test",
+    "test:all": "bun test src test"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
@@ -28,19 +28,19 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^12.0.0",
-    "@nestjs/mau": "^0.2.6",
-    "@nestjs/schematics": "^12.0.0",
     "@nestjs/testing": "^12.0.1",
     "@types/bun": "^1.4.1",
     "@types/express": "^5.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
     "oxfmt": "^0.66.0",
-    "oxlint": "^1.58.0",
-    "source-map-support": "^0.5.21",
+    "oxlint": "^1.81.0",
     "supertest": "^7.0.0",
-    "typescript": "^6.0.2"
+    "typescript": "^7.0.2"
   },
-  "packageManager": "bun@1.4.2"
+  "packageManager": "bun@1.4.2",
+  "patchedDependencies": {
+    "@nestjs/core@12.0.1": "patches/@nestjs%2Fcore@12.0.1.patch",
+    "@nestjs/common@12.0.1": "patches/@nestjs%2Fcommon@12.0.1.patch"
+  }
 }

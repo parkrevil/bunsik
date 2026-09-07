@@ -1,0 +1,60 @@
+diff --git a/nest-application.js b/nest-application.js
+index 47c5e6edea56252ca860b0f9a75ef270ec9a0c3a..c7f3ffff2fc42ae0bbef4da105762e8c2bd72299 100644
+--- a/nest-application.js
++++ b/nest-application.js
+@@ -394,8 +394,8 @@ export class NestApplication extends NestApplicationContext {
+      */
+     async preloadLazyPackages() {
+         // Best-effort: silently swallow if packages are not installed
+-        await tryLoadPackage('@nestjs/platform-express', () => import('@nestjs/platform-express'));
+-        await tryLoadPackage('@nestjs/microservices', () => import('@nestjs/microservices'));
++        await tryLoadPackage('@nestjs/platform-express', async () => { try { return await import('@nestjs/platform-express'); } catch (e) { throw e; } });
++        await tryLoadPackage('@nestjs/microservices', async () => { try { return await import('@nestjs/microservices'); } catch (e) { throw e; } });
+     }
+     host() {
+         const address = this.httpServer.address();
+@@ -439,7 +439,7 @@ export class NestApplication extends NestApplicationContext {
+     }
+     async loadSocketModule() {
+         if (!this.socketModule) {
+-            const socketModule = await optionalRequire('@nestjs/websockets/socket-module', () => import('@nestjs/websockets/socket-module.js'));
++            const socketModule = await optionalRequire('@nestjs/websockets/socket-module', async () => { try { return await import('@nestjs/websockets/socket-module.js'); } catch (e) { throw e; } });
+             if (socketModule?.SocketModule) {
+                 this.socketModule = new socketModule.SocketModule();
+             }
+@@ -447,11 +447,11 @@ export class NestApplication extends NestApplicationContext {
+     }
+     async loadMicroservicesModule() {
+         if (!this.microservicesModule) {
+-            const msModule = await optionalRequire('@nestjs/microservices/microservices-module', () => import('@nestjs/microservices/microservices-module.js'));
++            const msModule = await optionalRequire('@nestjs/microservices/microservices-module', async () => { try { return await import('@nestjs/microservices/microservices-module.js'); } catch (e) { throw e; } });
+             if (msModule?.MicroservicesModule) {
+                 this.microservicesModule = new msModule.MicroservicesModule();
+                 // Pre-cache the main barrel so connectMicroservice() can stay synchronous
+-                await loadPackage('@nestjs/microservices', 'NestFactory', () => import('@nestjs/microservices'));
++                await loadPackage('@nestjs/microservices', 'NestFactory', async () => { try { return await import('@nestjs/microservices'); } catch (e) { throw e; } });
+             }
+         }
+     }
+diff --git a/nest-factory.js b/nest-factory.js
+index 51e8c0f9c4652e4cc3fc7bb109d47699fcb480d1..9263fd077ebd2773823cf256da8c3c012338e903 100644
+--- a/nest-factory.js
++++ b/nest-factory.js
+@@ -49,7 +49,7 @@ export class NestFactoryStatic {
+      * contains a reference to the NestMicroservice instance.
+      */
+     async createMicroservice(moduleCls, options) {
+-        const { NestMicroservice } = await loadPackage('@nestjs/microservices', 'NestFactory', () => import('@nestjs/microservices'));
++        const { NestMicroservice } = await loadPackage('@nestjs/microservices', 'NestFactory', async () => { try { return await import('@nestjs/microservices'); } catch (e) { throw e; } });
+         const applicationConfig = new ApplicationConfig();
+         const container = new NestContainer(applicationConfig, options);
+         const graphInspector = this.createGraphInspector(options, container);
+@@ -166,7 +166,7 @@ export class NestFactoryStatic {
+         this.autoFlushLogs = autoFlushLogs ?? true;
+     }
+     async createHttpAdapter(httpServer) {
+-        const { ExpressAdapter } = await loadAdapter('@nestjs/platform-express', 'HTTP', () => import('@nestjs/platform-express'));
++        const { ExpressAdapter } = await loadAdapter('@nestjs/platform-express', 'HTTP', async () => { try { return await import('@nestjs/platform-express'); } catch (e) { throw e; } });
+         return new ExpressAdapter(httpServer);
+     }
+     isHttpServer(serverOrOptions) {
