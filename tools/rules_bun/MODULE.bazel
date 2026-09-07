@@ -1,0 +1,15 @@
+"""rules_bun — Bun 을 1급 툴체인으로 쓰는 Bazel 룰셋."""
+
+module(
+    name = "rules_bun",
+    # 버전은 비워 둔다. 비레지스트리 override 로 쓸 때 문제를 막는다.
+    # (bazel-contrib/rules-template 의 주석 참조)
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "platforms", version = "1.0.0")
+
+# 툴체인 버전은 선언하지 않는다.
+# 여기서 선언하면 소비자(루트 모듈)가 버전을 내릴 수 없다 —
+# 확장이 선언된 버전 중 최댓값을 고르므로 룰셋 쪽 값이 항상 이긴다.
+# 룰셋 자체 검증은 e2e 워크스페이스에서 한다.

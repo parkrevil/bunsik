@@ -577,7 +577,13 @@ BunInfo = provider(fields = {
 **`bun_binary`** — 런처 스크립트 + runfiles. 런처는 반드시:
 1. cwd를 runfiles 안 bazel-out 대응 디렉터리로 이동
 2. `bun --no-install` 로 실행 (§2.1 E)
-3. `bunfig.toml`을 명시적으로 지정하거나 무력화 — 사용자 홈의 `~/.bunfig.toml`이 새어들어오면 hermeticity가 깨진다
+3. `bunfig.toml`을 명시적으로 지정하고 `--no-install`·`--no-env-file`을 붙인다.
+   ⚠️ **초안의 "사용자 홈의 `~/.bunfig.toml`"은 대상을 잘못 짚었다** — 실측 결과 Bun은 홈의
+   bunfig를 읽지 않는다. 실제 유출원은 **액션 cwd(execroot)의 `bunfig.toml`**이며 그 `preload`가
+   액션 안에서 실행된다. 이 파일은 액션의 선언된 입력이 아니라 action key에 들어가지 않으므로,
+   바뀐 산출물이 정상 키로 캐시에 남는다. `NODE_OPTIONS`는 Bun이 무시하므로 벡터가 아니다.
+   `/dev/null`은 쓰지 않는다 — Windows에 없고 Bun은 없는 설정 파일에 하드 실패한다.
+   `bun/private/hardening.bzl` 참조
 
 **`bun_test`** — `bun_binary` + 테스트 계약:
 - `--reporter=junit --reporter-outfile=$XML_OUTPUT_FILE`

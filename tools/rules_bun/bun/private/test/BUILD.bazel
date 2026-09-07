@@ -1,0 +1,9 @@
+load(":smoke.bzl", "bun_version")
+
+package(default_visibility = ["//visibility:public"])
+
+bun_version(name = "bun_version")
+
+load(":hardening_test.bzl", "hardening_test")
+
+hardening_test(name = "hardening_test")

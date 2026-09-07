@@ -4,3 +4,15 @@ module(
     name = "bunsik",
     version = "0.0.0",
 )
+
+bazel_dep(name = "rules_bun", version = "0.0.0")
+local_path_override(
+    module_name = "rules_bun",
+    path = "tools/rules_bun",
+)
+
+bun = use_extension("@rules_bun//bun:extensions.bzl", "bun")
+bun.toolchain(bun_version = "1.4.2")
+use_repo(bun, "bun_toolchains")
+
+register_toolchains("@bun_toolchains//:all")

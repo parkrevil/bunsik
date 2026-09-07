@@ -1,0 +1,10 @@
+package(default_visibility = ["//bun:__subpackages__"])
+
+exports_files([
+    "action.bzl",
+    "hardening.bzl",
+    "platforms.bzl",
+    "runfiles.bzl",
+    "toolchains_repo.bzl",
+    "versions.bzl",
+])

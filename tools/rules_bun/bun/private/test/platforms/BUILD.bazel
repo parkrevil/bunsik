@@ -1,0 +1,32 @@
+"""크로스 컴파일 회귀 테스트용 플랫폼.
+
+`exec_compatible_with` 와 `target_compatible_with` 에 같은 제약을 걸면
+exec == target 조합만 성립해 크로스 컴파일이 원천 불가해진다.
+아래 플랫폼들로 `--platforms` 를 바꿔 빌드해 회귀를 잡는다.
+"""
+
+package(default_visibility = ["//visibility:public"])
+
+platform(
+    name = "darwin_aarch64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+platform(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+platform(
+    name = "windows_x64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+)

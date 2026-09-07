@@ -1,0 +1,21 @@
+"""rules_bun 자체 검증용 워크스페이스.
+
+룰셋의 `MODULE.bazel` 은 툴체인 버전을 선언하지 않는다. 거기서 선언하면
+소비자가 버전을 내릴 수 없기 때문이다. 그래서 자기 검증은 이 별도 모듈이
+소비자 역할을 맡아서 한다 — `bazel-contrib/rules-template` 의 `e2e/smoke`
+와 같은 구조다.
+"""
+
+module(name = "rules_bun_e2e_smoke")
+
+bazel_dep(name = "rules_bun", version = "0.0.0")
+local_path_override(
+    module_name = "rules_bun",
+    path = "../..",
+)
+
+bun = use_extension("@rules_bun//bun:extensions.bzl", "bun")
+bun.toolchain(bun_version = "1.4.2")
+use_repo(bun, "bun_toolchains")
+
+register_toolchains("@bun_toolchains//:all")

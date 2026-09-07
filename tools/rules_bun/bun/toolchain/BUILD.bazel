@@ -1,0 +1,5 @@
+"""룰 작성자가 `toolchains` 속성에 넣을 툴체인 타입."""
+
+package(default_visibility = ["//visibility:public"])
+
+toolchain_type(name = "type")
