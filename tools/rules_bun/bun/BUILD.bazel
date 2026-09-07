@@ -2,6 +2,10 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 package(default_visibility = ["//visibility:public"])
 
+# 룰 작성자가 `toolchains` 속성에 넣는 툴체인 타입.
+# 설계 문서(docs/rules_bun-design.md §4.1)가 정한 라벨이다.
+toolchain_type(name = "toolchain_type")
+
 bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],

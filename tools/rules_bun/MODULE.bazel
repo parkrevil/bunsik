@@ -2,6 +2,8 @@
 
 module(
     name = "rules_bun",
+    # README 가 요구하는 최소 버전을 실제로 강제한다.
+    bazel_compatibility = [">=9.2.0"],
     # 버전은 비워 둔다. 비레지스트리 override 로 쓸 때 문제를 막는다.
     # (bazel-contrib/rules-template 의 주석 참조)
 )

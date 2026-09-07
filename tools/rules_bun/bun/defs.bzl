@@ -6,6 +6,8 @@
 load("//bun/private:providers.bzl", _BunInfo = "BunInfo")
 
 # 룰 작성자가 `toolchains` 속성에 넣는 툴체인 타입.
-BUN_TOOLCHAIN_TYPE = "@rules_bun//bun/toolchain:type"
+# 문자열이 아니라 Label 로 둔다. 문자열이면 저장소 이름(`@rules_bun`)이
+# 박혀서 모듈 이름이 바뀌거나 repo_name 이 다르게 매핑되면 깨진다.
+BUN_TOOLCHAIN_TYPE = Label("//bun:toolchain_type")
 
 BunInfo = _BunInfo

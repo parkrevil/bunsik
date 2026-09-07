@@ -8,4 +8,8 @@ MODULE.bazel 은 툴체인 버전을 선언하지 않기 때문이다. 그런 �
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["hardening_test.bzl"])
+exports_files([
+    "action_test.bzl",
+    "hardening_test.bzl",
+    "platform_transition.bzl",
+])

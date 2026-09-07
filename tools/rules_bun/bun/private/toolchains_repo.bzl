@@ -22,7 +22,7 @@ toolchain(
     # 원천 불가해진다(재현: --platforms 를 바꾸면 "No matching toolchains").
     exec_compatible_with = {compatible_with},
     toolchain = "@{user_repo}_{platform}//:bun_toolchain",
-    toolchain_type = "@rules_bun//bun/toolchain:type",
+    toolchain_type = "@rules_bun//bun:toolchain_type",
 )
 """.format(
             platform = platform,
