@@ -7,7 +7,7 @@
 
 load("//bun:defs.bzl", "BUN_TOOLCHAIN_TYPE")
 load("//bun/private:hardening.bzl", "empty_bunfig", "hardening_args")
-load("//bun/private:runfiles.bzl", "runfiles_path")
+load("//bun/private:paths.bzl", "runfiles_path")
 
 # preload 가 돌면 결과 문자열이 오염되고, .env 가 읽히면 PORT 가 채워진다.
 _PROBE = """
