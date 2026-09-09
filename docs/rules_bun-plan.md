@@ -1,6 +1,6 @@
 # rules_bun 실행 계획
 
-> 대상: `tools/rules_bun` — 커밋 `969a23c` 기준
+> 대상: `tools/rules_bun` — 커밋 `601f5f3` 기준
 > 선행 문서: [`rules_bun-design.md`](rules_bun-design.md) (아키텍처), [`bazel-rule-authoring.md`](bazel-rule-authoring.md) (Bazel 계약)
 > 이 문서: **무엇을 어떤 순서로 할 것인가**와 **왜 그렇게 정했는가**
 
@@ -20,7 +20,7 @@ docs/  BUILD.bazel  defs.md  toolchain.md
 e2e/smoke/  MODULE.bazel  BUILD.bazel  verify.bzl  platforms/
 ```
 
-검증되는 것 — buildifier 경고 0, 테스트 10개(룰셋 5 + e2e 5).
+검증되는 것 — buildifier 경고 0. **§3.1 완료 후 `bazel test //...` 하나로 10개가 전부 돈다**(이전에는 룰셋 5 + e2e 5로 갈려 있었다). `e2e/smoke` 는 소비자 관점 검증 1개만 남았다.
 
 | 테스트 | 무엇을 잡나 |
 |---|---|
@@ -50,10 +50,10 @@ rules_bun                      defs.bzl  extensions.bzl  repositories.bzl  toolc
 | 룰셋 | `private/*.bzl` 평면 | 하위그룹 |
 |---|---|---|
 | **rules-template (스캐폴드)** | 2 | **0** |
-| rules_go | 15 | 5 |
-| rules_ruby | 19 | 8 |
-| rules_js | 38 | 10 |
-| rules_python | 88 | 7 |
+| rules_go | 14 | 5 |
+| rules_ruby | 18 | 8 |
+| rules_js | 13 | 10 |
+| rules_python | 87 | 7 |
 | **rules_bun (현재)** | **8** | **0** |
 
 하위그룹은 **파일 수가 아니라 곁딸린 자산** 때문에 생긴다.
@@ -62,7 +62,11 @@ rules_bun                      defs.bzl  extensions.bzl  repositories.bzl  toolc
 rules_ruby/ruby/private/binary/   BUILD  binary.cmd.tpl  binary.sh.tpl
 ```
 
-`rules_python`은 툴체인 관련 `.bzl`만 평면에 26개를 두고도 `toolchain/`을 만들지 않았다. 우리는 8개에 자산이 없다.
+`rules_python`은 이름에 `toolchain` 이 들어간 파일만 평면에 13개를 두고도 `toolchain/` 을 만들지 않았다. 우리는 8개에 자산이 없다.
+
+> 측정: `find <룰셋>/<lang>/private -mindepth 1 -maxdepth 1 -name '*.bzl' | wc -l`
+> `rules_js` 는 `js/private`(13) 과 `npm/private`(25) 가 별도 최상위 디렉터리다.
+> 언어 디렉터리 하나만 센다.
 
 ### 1.3 `repositories.bzl` 최상위 공개 유지
 
@@ -85,7 +89,7 @@ rules_ruby/ruby/private/binary/   BUILD  binary.cmd.tpl  binary.sh.tpl
 | 제안 | 기각 사유 |
 |---|---|
 | `repositories.bzl` → `private/toolchain/` | 공식 스캐폴드가 최상위에 둔다(§1.3). 근거였던 `rules_ruby` 하나만 다르다 |
-| `private/toolchain/` 하위그룹 신설 | 스캐폴드 하위그룹 0개, `rules_python`은 평면 26개(§1.2). 곁딸린 자산이 없다 |
+| `private/toolchain/` 하위그룹 신설 | 스캐폴드 하위그룹 0개, `rules_python`은 평면 87개(§1.2). 곁딸린 자산이 없다 |
 | 룰셋 `MODULE.bazel`에서 툴체인 선언 삭제 | **이미 했고 잘못이었다.** §3.1 참조 |
 
 ---
@@ -165,14 +169,14 @@ register_toolchains(..., dev_dependency = True)
 ## 4. 실행 순서
 
 ```
-1  룰셋 툴체인 (dev_dependency)        ← 이후 모든 회귀를 룰셋에서 볼 수 있게 됨
+1  룰셋 툴체인 (dev_dependency)        ← 완료 (601f5f3)
 2  BunInfo → BunRuntimeInfo
 3  bun/providers.bzl 신설               (2 선행)
 4  private/toolchain_type.bzl
 5  hardening → reproducible
 6  tests/fixtures.bzl 분리
 7  docs/ 확장                           (2,3 선행)
-8  선행 문서 갱신                        (2,3,6 선행)
+8  선행 문서 갱신                        (2,3,5,6 선행)
 ───────────────────────────────────────
    여기서 bun_library TDD 착수
 ```

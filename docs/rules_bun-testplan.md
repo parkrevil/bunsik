@@ -86,7 +86,7 @@
 | L-B1 | `srcs` 파일 1개 | 실행 | — |
 | L-B2 | `srcs` 파일 다수 (param file 전환 임계 초과) | 분석 | param file 미사용으로 되돌림 → argv 길이 폭증 확인 |
 | L-B3 | `deps` 0개 | 분석 | — |
-| L-B4 | 전이 깊이 3단 이상 | 분석 | `depset` 을 `to_list()` 로 → 성능·정확성 |
+| L-B4 | 전이 깊이 3단 이상 — inputs 에 전이 파일이 전부 들어간다 | 분석 | `transitive` 를 빼고 `direct` 만 → 3단째 파일이 inputs 에서 빠지는가. (성능은 분석 층에서 측정 불가) |
 | L-B5 | 비ASCII 경로·파일명 | 실행 | — |
 
 ### 4.3 예외 — **설계 문서가 이미 실측한 지뢰**
@@ -162,7 +162,7 @@
 | # | 케이스 | 근거 | 층 |
 |---|---|---|---|
 | U-H1 | 단일 파일 모드에서 출력이 예측 가능하다 | §4.4 — 기본 `naming = "[name].[ext]"` | 분석 |
-| U-X1 | `--splitting` 은 `--outdir` 없이 **실패한다** | 실측: `error: Must use --outdir when code splitting is enabled` | 분석 |
+| U-X1 | `--splitting` + `--outfile` 조합이 거부된다 | 실측: Bun 이 실행 중에 `error: Must use --outdir when code splitting is enabled` | **구현 결정 필요** — Starlark `fail()` 로 사전 차단하면 분석 층, Bun 실행에 맡기면 실행 층. **룰 작성 시 이 결정을 먼저 한다** |
 | U-X2 | `--bytecode` 는 최상위 `await` 와 충돌한다 | 실측 | 실행 |
 | E-H1 | `--compile` 산출물이 `node_modules` 없이 실행된다 | 실측 | 실행 |
 | E-P1 | `--target=bun-<os>-<arch>` 가 타겟 플랫폼에서 유도된다 | §4.4 | 분석 |
@@ -175,11 +175,62 @@
 
 | # | 케이스 | 근거 | 층 |
 |---|---|---|---|
-| K-X1 | 패키지 단위 tree artifact 안에 **심볼릭 링크가 0개**다 | §2.2 A — tree artifact 안의 심볼릭 링크는 문제를 일으킨다 | 분석 |
+| K-X1 | 패키지 단위 tree artifact 안에 **심볼릭 링크가 0개**다 | §2.2 A | **실행** — tree artifact 내부는 액션 실행 후에만 걸어볼 수 있다. 분석 층에서는 불가 |
 | K-X2 | 각 store 디렉터리에 **직접 의존성이 전부 링크**된다 | §2.2 E — 안 하면 phantom dependency 가 통과한다 | 실행 |
 | K-X3 | 파일 1개 변경 시 재실행 액션이 **2개**다 | §2.4 실측 | 실행 |
 | K-X4 | 절대경로 심볼릭 링크가 **0개**다 | §2.3 — 위치 독립성 | 실행 |
 | K-N1 | 미선언 의존성 import 가 **실패한다** | phantom dependency 방지 | 실행 |
+| **K-O1** | 우리 레이아웃의 **(인스턴스, dep) 엣지 집합이 오라클과 일치**한다 | §2.3 — `bun install --linker isolated` 를 해석 그래프의 오라클로 쓴다. §8 M3 의 통과 기준이다 | 실행 (differential) |
+| **K-O2** | peer 충돌로 인스턴스가 갈릴 때도 엣지가 일치한다 | §2.3 — peer 해시가 디렉터리 이름에 노출된다 | 실행 (differential) |
+| **K-M1** | 두 소비자가 같은 패키지를 import 하면 **인스턴스가 하나**다 (`a === b`) | §2.2 D — 모듈 동일성. NestJS DI 싱글턴이 이것에 의존한다. §8 M4 의 핵심 검증 | 실행 |
+| **K-M2** | tree artifact 중복이 **4.5배로 폭증하지 않는다** | §2.2 A/B — 초안 A안이 반증된 지점 | 실행 (크기 측정) |
+
+---
+
+## 8-A. 아직 룰이 없는 영역 — 케이스만 적어둔다
+
+설계 문서 §6 "핵심 난제와 대응" 의 항목들이다. **해당 룰을 만들 때 이 표를 먼저 본다.**
+
+### 라이프사이클 스크립트 (§6.1)
+
+| # | 케이스 | 근거 | 층 |
+|---|---|---|---|
+| S-X1 | `--ignore-scripts` 가 기본이다 | §6.1 (a) — `postinstall` 이 샌드박스 밖에서 네트워크·바이너리를 받는다 | 분석 |
+| S-X2 | 코드 생성이 필요한 패키지는 **별도 룰로 승격**된다 | §6.1 (b) — prisma 류. install 액션에 숨기지 않는다 | 실행 |
+| S-X3 | 로컬 `trustedDependencies` 와 Bazel 동작이 **일치**한다 | §6.1 (c) — 불일치하면 "내 머신에서만 되는" 빌드가 된다 | 실행 |
+
+### git 의존성 (§6.2)
+
+| # | 케이스 | 근거 | 층 |
+|---|---|---|---|
+| G-N1 | git 의존성은 **기본 금지**다 | §6.2 — lockfile integrity 가 tarball 과 불일치한다 | 분석 (`fail()`) |
+| G-X1 | opt-in 시 **커밋 SHA 로 고정**된다 | §6.2 | 분석 |
+
+### exec / target 설정 분리 (§6.3)
+
+| # | 케이스 | 근거 | 층 |
+|---|---|---|---|
+| C-X1 | npm 패키지를 exec transition 으로 **끌지 않는다** | §6.3 — 끌면 링크 레이어가 정확히 2배 복제된다 | 분석 |
+| C-X2 | 타입체크용 node_modules 가 **별도 타겟**으로 분리된다 | §6.3 | 분석 |
+
+### 원격 캐시 (§6.4)
+
+| # | 케이스 | 근거 | 층 |
+|---|---|---|---|
+| R-X1 | 런처가 **Bazel 밖의 `node_modules` 를 참조하지 않는다** | §6.4 — `--remote_download_minimal` 에서 링크가 끊어진다 | 분석 |
+
+### 타입 체크 (`bun_types`)
+
+설계 §4.4·§5 가 *"트랜스파일은 `bun build`, 타입 체크만 `tsc`"* 로 규정했고,
+`bazel-rule-authoring.md` §7.5 가 이를 **validation action** 으로 구현하라고 확정했다.
+
+| # | 케이스 | 근거 | 층 |
+|---|---|---|---|
+| Y-H1 | `tsc --noEmit` 결과가 `_validation` 출력 그룹으로 나간다 | §7.5 — 빌드 임계 경로를 막지 않고 병렬로 돈다 | 분석 |
+| Y-X1 | 검증 출력이 `DefaultInfo` 나 다른 액션 입력에 **들어가지 않는다** | §7.5 — 넣으면 임계 경로가 된다 | 분석 |
+| Y-X2 | `--run_validations=false` 로 끌 수 있다 | §7.5 | 실행 |
+| Y-X3 | exec 설정에서 빌드되면 validation 이 **실행되지 않는다**(문서화된 한계) | §7.5 | 실행 |
+| Y-C1 | 커버리지가 `instrumented_files_info` 로 선언된다 | §7.4 | 분석 |
 
 ---
 
@@ -216,6 +267,37 @@ bun/tests/fixtures/
 ```
 
 **2번과 5번이 이 문서의 존재 이유다.** 지금까지 가짜 테스트 둘이 나온 건 2번을 안 했기 때문이고, 그걸 발견한 건 5번을 사후에 했기 때문이다.
+
+### 전제 — 격리와 스텁 없이는 red-green 이 성립하지 않는다
+
+미구현 심볼을 `load` 하면 **그 패키지 전체가 죽는다.** 실측:
+
+```
+bun/tests/BUILD.bazel 에 미구현 심볼 load 1줄 추가
+→ ERROR: package contains errors: bun/tests
+→ 기존 semver_test_0 도 "target not declared" 가 된다
+```
+
+즉 "그 케이스만 red" 가 아니라 **기존 테스트 전부가 실행 불가**가 되고,
+red 의 의미도 왜곡된다 — assertion 실패가 아니라 Starlark load 에러라
+무엇을 구현해야 통과하는지 테스트가 알려주지 못한다.
+
+**대응 두 가지를 반드시 함께 쓴다.**
+
+1. **패키지 격리** — 새 룰의 테스트는 `bun/tests/<rule>/BUILD.bazel` 로
+   분리해 기존 테스트와 다른 패키지에 둔다.
+2. **실패 스텁 선행** — `load()` 가 성공하도록 항상 실패하는 최소 룰을
+   먼저 커밋한다.
+
+   ```python
+   def _bun_library_impl(ctx):
+       fail("bun_library: 미구현")
+
+   bun_library = rule(implementation = _bun_library_impl, attrs = {...})
+   ```
+
+   이러면 케이스가 **assertion 실패로 red** 가 되고, 최소 구현을 채워
+   green 으로 만드는 정상 사이클이 성립한다.
 
 ### 순서
 
