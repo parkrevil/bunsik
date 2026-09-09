@@ -1,0 +1,62 @@
+--- a/knex/lib/dialects/better-sqlite3/index.js
++++ b/knex/lib/dialects/better-sqlite3/index.js
+@@ -4,7 +4,7 @@
+ 
+ class Client_BetterSQLite3 extends Client_SQLite3 {
+   _driver() {
+-    return require('better-sqlite3');
++    return process.versions.bun ? require('bun:sqlite').Database : require('better-sqlite3');
+   }
+ 
+   // Get a raw connection from the database, returning a promise with the connection object.
+@@ -13,6 +13,7 @@
+ 
+     return new this.driver(this.connectionSettings.filename, {
+       nativeBinding: options.nativeBinding,
++      create: !options.readonly,
+       readonly: !!options.readonly,
+     });
+   }
+@@ -35,7 +36,7 @@
+     const statement = connection.prepare(obj.sql);
+     const bindings = this._formatBindings(obj.bindings);
+ 
+-    if (statement.reader) {
++    if (statement.reader ?? statement.columnNames.length > 0) {
+       const response = await statement.all(bindings);
+       obj.response = response;
+       return obj;
+--- a/@backstage/backend-defaults/dist/entrypoints/auth/plugin/keys/DatabasePluginKeySource.cjs.js
++++ b/@backstage/backend-defaults/dist/entrypoints/auth/plugin/keys/DatabasePluginKeySource.cjs.js
+@@ -45,7 +45,7 @@
+     );
+     const promise = (async () => {
+       const kid = node_crypto.randomUUID();
+-      const key = await jose.generateKeyPair(this.algorithm);
++      const key = await jose.generateKeyPair(this.algorithm, { extractable: true });
+       const publicKey = await jose.exportJWK(key.publicKey);
+       const privateKey = await jose.exportJWK(key.privateKey);
+       publicKey.kid = privateKey.kid = kid;
+--- a/@backstage/plugin-auth-backend/dist/identity/TokenFactory.cjs.js
++++ b/@backstage/plugin-auth-backend/dist/identity/TokenFactory.cjs.js
+@@ -71,7 +71,7 @@
+       seconds: this.keyDurationSeconds
+     }).toJSDate();
+     const promise = (async () => {
+-      const key = await jose.generateKeyPair(this.algorithm);
++      const key = await jose.generateKeyPair(this.algorithm, { extractable: true });
+       const publicKey = await jose.exportJWK(key.publicKey);
+       const privateKey = await jose.exportJWK(key.privateKey);
+       publicKey.kid = privateKey.kid = crypto.randomUUID();
+--- a/@backstage/backend-defaults/dist/entrypoints/database/connectors/sqlite3.cjs.js
++++ b/@backstage/backend-defaults/dist/entrypoints/database/connectors/sqlite3.cjs.js
+@@ -52,8 +52,7 @@
+     database = knexFactory__default.default(knexConfig);
+   }
+   database.client.pool.on("createSuccess", (_eventId, resource) => {
+-    resource.run("PRAGMA foreign_keys = ON", () => {
+-    });
++    resource.exec("PRAGMA foreign_keys = ON");
+   });
+   return database;
+ }
