@@ -20,7 +20,13 @@ docs/  BUILD.bazel  defs.md  toolchain.md
 e2e/smoke/  MODULE.bazel  BUILD.bazel  verify.bzl  platforms/
 ```
 
-검증되는 것 — buildifier 경고 0. **§3.1 완료 후 `bazel test //...` 하나로 10개가 전부 돈다**(이전에는 룰셋 5 + e2e 5로 갈려 있었다). `e2e/smoke` 는 소비자 관점 검증 1개만 남았다.
+검증되는 것 — buildifier 경고 0. **§3.1 완료 후 `bazel test //...` 하나로 10개가 전부 돈다**(이전에는 룰셋 5 + e2e 5로 갈려 있었다).
+
+> ⚠️ **§3.1 이 만든 회귀.** 테스트를 룰셋으로 옮기면서 `e2e/smoke` 의 테스트가
+> **0개**가 됐다. 남은 `//:verify` 는 `Bun.version` 을 파일로 쓸 뿐 **아무도 그
+> 값을 단언하지 않는다**(단언 구문 0). 즉 **소비자 관점 회귀 방어가 사라졌다.**
+> `e2e/smoke/MODULE.bazel` 의 주석("룰셋은 툴체인 버전을 선언하지 않는다")도
+> 이제 거짓이다. §3.9 에서 복구한다.
 
 | 테스트 | 무엇을 잡나 |
 |---|---|
@@ -94,6 +100,29 @@ rules_ruby/ruby/private/binary/   BUILD  binary.cmd.tpl  binary.sh.tpl
 
 ---
 
+## 2-A. M0 게이트 — Bazel 코드를 쓰기 전에 확인한다
+
+설계 §8 "가장 먼저 해야 할 일" 1순위다. 계획서 초안에서 **누락했다.**
+
+> **M0 — NestJS 실행 가능성 스파이크 (Bazel 없이).** 순수 Bun 으로 순환 의존 +
+> `emitDecoratorMetadata` + 실제 NestJS DI 컨테이너를 부팅시킨다. §2.8 의
+> `import type` 규약이 실제 NestJS 에서 성립하는지, 3rd-party 라이브러리가 이
+> 제약을 위반하지 않는지 확인한다.
+> **이게 실패하면 룰셋 설계 전체가 무의미하다.** Bazel 코드를 한 줄도 쓰기 전에
+> 확인한다.
+
+설계 §7 리스크 #5 가 이 단계를 유일한 확인 수단으로 지정했다 — *"3rd-party
+라이브러리가 위반하면 우리가 고칠 수 없다. **M0 의 검증 대상.**"*
+
+**게이트다.** M0 이 실패하면 `bun_library` 착수를 막는다. 리팩터(§3)는 M0 과
+독립이므로 병행 가능하다.
+
+이어서 **M4′** — §2.7 사전 컴파일 + §2.2 D 링크로 그 앱을 Bazel 에서 부팅.
+모듈 동일성과 tsconfig 시맨틱이 동시에 걸리는 지점이고, 설계 §7 리스크 #2 가
+*"아직 가설"* 이라고 표시한 항목의 진짜 검증이다.
+
+---
+
 ## 3. 리팩터 — `bun_library` 착수 전에 끝낸다
 
 이후에는 전부 breaking change가 된다. 소비자 0, e2e 1개인 지금만 무료다.
@@ -125,11 +154,17 @@ register_toolchains(..., dev_dependency = True)
 
 **결정** — 라이브러리가 `BunInfo`를 가져가고 툴체인은 `BunRuntimeInfo`. 동시에 `ToolchainInfo(buninfo=...)` → `ToolchainInfo(runtime=...)`. `buninfo`는 타입명을 필드명에 반복하는 중복이다.
 
-**완료 판정** — `grep -rn "BunInfo\|buninfo" tools/rules_bun` 결과가 신설 `bun/providers.bzl`과 문서에만 남는다.
+**완료 판정** — `grep -rn "BunInfo\|buninfo" tools/rules_bun` 결과가 **문서에만** 남는다. `BunInfo` 라는 이름은 코드 어디에도 없다.
 
 ### 3.3 [1순위] `bun/providers.bzl` 신설 (공개)
 
 `bazel-rule-authoring.md` §1이 `bun/providers.bzl ← 공개 provider`로 지정했는데 구현은 `private/`에 있고 `defs.bzl`이 재export한다. `rules_js`가 `js/providers.bzl`(공개) + `js/private/js_info.bzl`(구현) 2단이다. `defs.bzl`은 룰만 공개한다.
+
+> **`BunRuntimeInfo` 만 공개한다.** 라이브러리용 `BunInfo` 는 `bun_library` 가
+> 실제로 필드를 채우는 시점에, 채워지는 필드만 갖고 등장한다. 설계 §4.4 의
+> 필드 목록은 스케치이고 아무 룰도 소비하지 않는다. 지금 공개하면 §3.2 가
+> 고치려는 실수(확정 안 된 이름을 공개해 나중에 breaking change)를 그대로
+> 반복한다.
 
 ### 3.4 [2순위] `private/toolchain_type.bzl`
 
@@ -164,12 +199,30 @@ register_toolchains(..., dev_dependency = True)
 | `private/test/*.bzl` | `bun/tests/` | 구현 (`rules_ruby`가 `ruby/tests/`) |
 | `BunInfo` 필드 정의 | 툴체인용으로 점유됨 | §3.2에서 정리 |
 
+### 3.9 [1순위] `e2e/smoke` 복구 — §3.1 이 만든 회귀
+
+§3.1 이 테스트를 룰셋으로 옮기면서 **소비자 관점 회귀 방어가 0이 됐다.**
+남은 `//:verify` 는 아무것도 단언하지 않는다.
+
+복구 내용:
+- `//:verify` 를 **테스트로** 바꿔 `Bun.version` 이 소비자가 선언한 버전과
+  일치하는지 단언한다
+- 소비자는 룰셋과 **다른 버전**(예: 1.3.0 + integrity)을 선언한다. 그래야
+  `dev_dependency` 계약("룰셋 버전이 소비자에게 전파되지 않는다")이 회귀로
+  잡힌다. 같은 버전이면 변이를 넣어도 초록불이다
+- `e2e/smoke/MODULE.bazel` 의 거짓이 된 주석 갱신
+
+**완료 판정** — `cd e2e/smoke && bazel test //...` 가 1개 이상 돌고, 룰셋
+`MODULE.bazel` 에서 `dev_dependency = True` 를 제거하면 **실패한다**.
+
 ---
 
 ## 4. 실행 순서
 
 ```
+0  M0 스파이크 (Bazel 밖)              ← 게이트. 실패하면 bun_library 착수 불가
 1  룰셋 툴체인 (dev_dependency)        ← 완료 (601f5f3)
+1b e2e/smoke 복구 (§3.9)               ← 1 이 만든 회귀
 2  BunInfo → BunRuntimeInfo
 3  bun/providers.bzl 신설               (2 선행)
 4  private/toolchain_type.bzl
