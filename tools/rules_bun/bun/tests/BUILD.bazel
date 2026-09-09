@@ -1,20 +1,49 @@
 """룰셋 자체의 테스트.
 
-`//bun` 안에 있으므로 `//bun/private/...` 를 load 할 수 있다.
-
-툴체인이 필요 없는 테스트는 여기서 인스턴스화한다. 툴체인이 필요한
-테스트는 룰만 정의하고 `//e2e/smoke` 가 인스턴스화한다 — 룰셋의
-MODULE.bazel 은 툴체인 버전을 선언하지 않기 때문이다.
+`//bun` 안에 있으므로 `//bun/private/...` 를 load 할 수 있고,
+MODULE.bazel 의 dev_dependency 툴체인 덕에 툴체인이 필요한 테스트도
+여기서 인스턴스화한다. 소비자에게는 그 툴체인이 전파되지 않는다.
 """
 
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load(":action_test.bzl", "action_fixture", "hardening_emitted_test")
+load(":hardening_test.bzl", "hardening_test")
+load(":platform_transition.bzl", "with_platform")
 load(":semver_test.bzl", "semver_test_suite")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
-exports_files([
-    "action_test.bzl",
-    "hardening_test.bzl",
-    "platform_transition.bzl",
-])
-
+# 순수 로직
 semver_test_suite(name = "semver")
+
+# 하드닝 — 두 층이 필요하다.
+# 방출(분석): 모든 룰이 하드닝 인자를 달고 나가는가
+# 행위(실행): 그 인자가 실제로 주변 상태를 차단하는가
+action_fixture(name = "action_fixture")
+
+hardening_emitted_test(
+    name = "hardening_emitted_test",
+    target_under_test = ":action_fixture",
+)
+
+hardening_test(name = "hardening_test")
+
+# 크로스 컴파일. build_test 는 --platforms 를 걸 수 없어 transition 을 쓴다.
+[
+    [
+        with_platform(
+            name = "fixture_" + platform,
+            platform = "//bun/tests/platforms:" + platform,
+            target = [":action_fixture"],
+        ),
+        build_test(
+            name = "cross_" + platform + "_test",
+            targets = ["fixture_" + platform],
+        ),
+    ]
+    for platform in [
+        "darwin_aarch64",
+        "linux_aarch64",
+        "windows_x64",
+    ]
+]

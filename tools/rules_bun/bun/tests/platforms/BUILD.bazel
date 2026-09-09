@@ -5,7 +5,7 @@ exec == target 조합만 성립해 크로스 컴파일이 원천 불가해진다
 아래 플랫폼들로 `--platforms` 를 바꿔 빌드해 회귀를 잡는다.
 """
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//bun:__subpackages__"])
 
 platform(
     name = "darwin_aarch64",

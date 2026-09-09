@@ -1,47 +1,10 @@
 """소비자 관점 검증.
 
-룰셋이 외부 모듈로 사용될 때 툴체인이 해석·다운로드·실행되는지,
-그리고 하드닝이 유지되는지 확인한다. 툴체인이 필요한 테스트를
-여기서 인스턴스화한다.
+룰셋 내부 테스트는 `//bun/tests` 에서 돈다. 여기서는 **외부 모듈이 공개 API
+만으로 툴체인을 쓸 수 있는가**만 확인한다. `//bun/private/...` 나
+`//bun/tests/...` 를 참조하지 않는다.
 """
 
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("@rules_bun//bun/tests:action_test.bzl", "action_fixture", "hardening_emitted_test")
-load("@rules_bun//bun/tests:hardening_test.bzl", "hardening_test")
-load("@rules_bun//bun/tests:platform_transition.bzl", "with_platform")
 load(":verify.bzl", "verify_toolchain")
 
 verify_toolchain(name = "verify")
-
-# 하드닝이 공격을 실제로 막는가
-hardening_test(name = "hardening_test")
-
-# 모든 룰이 그 하드닝을 달고 나가는가
-action_fixture(name = "action_fixture")
-
-hardening_emitted_test(
-    name = "hardening_emitted_test",
-    target_under_test = ":action_fixture",
-)
-
-# 크로스 컴파일 회귀 방어.
-# 툴체인 등록이 exec_compatible_with 만 걸어야 성립한다. target 까지 걸면
-# exec == target 조합만 남아 아래가 전부 깨진다.
-[
-    [
-        with_platform(
-            name = "verify_" + platform,
-            platform = "//platforms:" + platform,
-            target = [":verify"],
-        ),
-        build_test(
-            name = "cross_" + platform + "_test",
-            targets = ["verify_" + platform],
-        ),
-    ]
-    for platform in [
-        "darwin_aarch64",
-        "linux_aarch64",
-        "windows_x64",
-    ]
-]

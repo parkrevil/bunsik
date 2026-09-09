@@ -15,7 +15,21 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "stardoc", version = "0.8.0", dev_dependency = True)
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.5", dev_dependency = True)
 
-# 툴체인 버전은 선언하지 않는다.
-# 여기서 선언하면 소비자(루트 모듈)가 버전을 내릴 수 없다 —
-# 확장이 선언된 버전 중 최댓값을 고르므로 룰셋 쪽 값이 항상 이긴다.
-# 룰셋 자체 검증은 e2e 워크스페이스에서 한다.
+####### Dev dependencies ########
+#
+# 이 룰셋 자체의 테스트를 위한 툴체인이다. `dev_dependency = True` 는 이
+# 모듈이 **루트일 때만** 적용되므로 소비자에게 전파되지 않는다. 즉 소비자는
+# 자기 버전을 그대로 선언할 수 있다.
+#
+# 이게 없으면 툴체인이 필요한 테스트를 룰셋 워크스페이스에서 인스턴스화할
+# 수 없어 TDD 의 red 를 여기서 볼 수 없다.
+# 선례: aspect-build/rules_js 의 MODULE.bazel.
+
+bun_dev = use_extension("//bun:extensions.bzl", "bun", dev_dependency = True)
+bun_dev.toolchain(bun_version = "1.4.2")
+use_repo(bun_dev, "bun_toolchains")
+
+register_toolchains(
+    "@bun_toolchains//:all",
+    dev_dependency = True,
+)
