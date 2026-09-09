@@ -177,12 +177,21 @@ SaaS 이용에 대한 요금제·구독·사용량·청구와 반복 과금을 �
 - 고객 전용 비서 에이전트
 
 ### Frameworks
+- Lang?????
+- Google ADK
+- Microsoft AI Framework
+
+### Plugins
+- Superpowers
+- gstack
+- GSD
+- Spec kit
 
 ### Documentation
 #### 최상위 지식
+- Backstage
 - EventCatalog
 - Structurizr
-- 
 
 #### 서비스별 지식
 - openwiki: 모든 서브 프로젝트에 공통 적용
@@ -192,8 +201,6 @@ SaaS 이용에 대한 요금제·구독·사용량·청구와 반복 과금을 �
 - Agent OS
 - Tessl
 - OKF
-- Backstage
-- 
 
 ### Harness
 
@@ -210,8 +217,68 @@ A2A도 참고.
 ### PC
 ### Mobile
 ## Backend
+
+## Data
+### Search / Retrieval
+- Elasticsearch
+  - Full-text Search
+  - Product Search
+  - Semantic / Vector Search
+  - Hybrid Search
+  - RAG Retrieval
+
 ## DevOps
-### GitOps
+
+- Multi Tenant
+
+### Local Cluster — Argo
+- Kubernetes
+  - kind
+  - Cilium
+  - Gateway API
+- Argo CD
+- Helm
+- Kustomize
+- Vault
+- Vault Secrets Operator
+- cert-manager
+  - Vault PKI
+- Kyverno
+- OpenTelemetry
+- Prometheus
+- Thanos
+- Loki
+- Jaeger
+
+### Local Cluster — Flux
+- Kubernetes
+  - kind
+  - Calico
+  - Gateway API
+- Flux
+- Helm
+- Kustomize
+- OpenBao
+- External Secrets Operator
+- Secrets Store CSI Driver
+- cert-manager
+  - OpenBao PKI
+- OPA Gatekeeper
+- OpenTelemetry
+- VictoriaMetrics Cluster
+- OpenSearch
+- Tempo
+
+### Shared
+- Docker Desktop
+- Terraform
+- GitHub Actions
+  - Self-hosted Runner
+- Harbor
+- Vault
+  - Central Secret Manager
+- Grafana Mimir
+
 ## LLMOps
 ## MLOps
 
