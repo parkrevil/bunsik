@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "bazel-central-registry": {
+      "type": "stdio",
+      "command": "/home/revil/.local/bin/bcr-mcp",
+      "args": []
+    }
+  }
+}
